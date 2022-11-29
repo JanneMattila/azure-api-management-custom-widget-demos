@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {},
+	"extensions": {
+		"recommendations": [
+			"ms-azuretools.vscode-apimanagement",
+			"takumii.markdowntable"
+		]
+	}
+}
