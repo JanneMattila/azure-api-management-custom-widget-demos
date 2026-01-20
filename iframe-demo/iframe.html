@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IFrame Child Page</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 15px;
+      margin: 0;
+      background-color: #e3f2fd;
+    }
+    h3 {
+      margin-top: 0;
+      color: #1565c0;
+    }
+    .section {
+      background-color: white;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .section h4 {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+      color: #333;
+    }
+    button {
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 3px;
+      font-size: 12px;
+    }
+    button:hover {
+      background-color: #388e3c;
+    }
+    button.direct {
+      background-color: #ff9800;
+    }
+    button.direct:hover {
+      background-color: #f57c00;
+    }
+    input[type="text"] {
+      padding: 6px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      width: 150px;
+      margin-right: 5px;
+    }
+    .status {
+      font-size: 12px;
+      padding: 8px;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+    .status.success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .status.error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    .method-label {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: bold;
+      margin-left: 5px;
+    }
+    .method-label.postmessage {
+      background-color: #4caf50;
+      color: white;
+    }
+    .method-label.direct {
+      background-color: #ff9800;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <h3>📬 IFrame Controls</h3>
+  
+  <div class="section">
+    <h4>Using postMessage <span class="method-label postmessage">SAFE</span></h4>
+    <p style="font-size: 12px; color: #666;">Works with any sandbox setting and cross-origin</p>
+    
+    <div style="margin-bottom: 10px;">
+      <input type="text" id="custom-text" placeholder="Enter text...">
+      <button onclick="sendUpdateText()">Update Parent Text</button>
+    </div>
+    
+    <button onclick="sendIncrementCounter()">Increment Counter</button>
+    <button onclick="sendChangeColor('#ffebee')">Red BG</button>
+    <button onclick="sendChangeColor('#e8f5e9')">Green BG</button>
+    <button onclick="sendChangeColor('#e3f2fd')">Blue BG</button>
+    <button onclick="sendReset()">Reset All</button>
+  </div>
+
+  <div class="section">
+    <h4>Direct DOM Access <span class="method-label direct">RESTRICTED</span></h4>
+    <p style="font-size: 12px; color: #666;">Only works without sandbox or with allow-same-origin</p>
+    
+    <button class="direct" onclick="directUpdateText()">Direct: Update Text</button>
+    <button class="direct" onclick="directIncrementCounter()">Direct: Increment</button>
+    <button class="direct" onclick="directChangeColor()">Direct: Yellow BG</button>
+  </div>
+
+  <div id="status" class="status" style="display: none;"></div>
+
+  <script>
+    function showStatus(message, isError = false) {
+      const status = document.getElementById('status');
+      status.style.display = 'block';
+      status.className = 'status ' + (isError ? 'error' : 'success');
+      status.textContent = message;
+      
+      setTimeout(() => {
+        status.style.display = 'none';
+      }, 3000);
+    }
+
+    // ============================================
+    // postMessage Methods (Always work)
+    // ============================================
+    
+    function sendUpdateText() {
+      const text = document.getElementById('custom-text').value || 'Hello from IFrame!';
+      window.parent.postMessage({ action: 'updateText', text: text }, '*');
+      showStatus('✓ Sent updateText via postMessage');
+    }
+
+    function sendIncrementCounter() {
+      window.parent.postMessage({ action: 'incrementCounter' }, '*');
+      showStatus('✓ Sent incrementCounter via postMessage');
+    }
+
+    function sendChangeColor(color) {
+      window.parent.postMessage({ action: 'changeColor', color: color }, '*');
+      showStatus(`✓ Sent changeColor (${color}) via postMessage`);
+    }
+
+    function sendReset() {
+      window.parent.postMessage({ action: 'reset' }, '*');
+      showStatus('✓ Sent reset via postMessage');
+    }
+
+    // ============================================
+    // Direct DOM Access Methods (Restricted)
+    // ============================================
+
+    function directUpdateText() {
+      try {
+        window.parent.document.getElementById('updatable-text').textContent = 
+          '🔓 Updated directly from iframe!';
+        showStatus('✓ Direct DOM access successful!');
+      } catch (error) {
+        showStatus('✗ Direct DOM access blocked: ' + error.message, true);
+        console.error('Direct DOM access error:', error);
+      }
+    }
+
+    function directIncrementCounter() {
+      try {
+        const counter = window.parent.document.getElementById('counter');
+        counter.textContent = parseInt(counter.textContent) + 10;
+        showStatus('✓ Direct counter update successful (+10)!');
+      } catch (error) {
+        showStatus('✗ Direct DOM access blocked: ' + error.message, true);
+        console.error('Direct DOM access error:', error);
+      }
+    }
+
+    function directChangeColor() {
+      try {
+        window.parent.document.getElementById('parent-content').style.backgroundColor = '#fff9c4';
+        window.parent.document.getElementById('color-display').textContent = 'Yellow (direct)';
+        showStatus('✓ Direct style change successful!');
+      } catch (error) {
+        showStatus('✗ Direct DOM access blocked: ' + error.message, true);
+        console.error('Direct DOM access error:', error);
+      }
+    }
+
+    // Log initial state
+    console.log('IFrame loaded. Testing access to parent...');
+    try {
+      // This will throw if cross-origin or sandboxed without allow-same-origin
+      const test = window.parent.document.title;
+      console.log('Direct parent access: ALLOWED');
+    } catch (e) {
+      console.log('Direct parent access: BLOCKED -', e.message);
+    }
+  </script>
+</body>
+</html>
