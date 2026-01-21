@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en" class="height-fill">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DOM Widget - Parent Element Interceptor</title>
+  <link rel="stylesheet" href="./styles/app.scss">
+  <style>
+    .widget-container {
+      padding: 15px;
+      font-family: Arial, sans-serif;
+    }
+    .widget-header {
+      margin-bottom: 15px;
+    }
+    .widget-header h3 {
+      margin: 0 0 5px 0;
+      color: #333;
+    }
+    .widget-header p {
+      margin: 0;
+      color: #666;
+      font-size: 14px;
+    }
+    .config-section {
+      background-color: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      padding: 12px;
+      margin-bottom: 15px;
+    }
+    .config-section h4 {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+      color: #495057;
+    }
+    .config-item {
+      display: flex;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+    .config-item label {
+      font-weight: bold;
+      width: 140px;
+      color: #495057;
+    }
+    .config-item span {
+      font-family: monospace;
+      background-color: #e9ecef;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+    #status {
+      background-color: #f5f5f5;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 10px;
+      max-height: 150px;
+      overflow-y: auto;
+      font-size: 12px;
+      font-family: monospace;
+    }
+    .status-entry {
+      padding: 4px 8px;
+      margin: 2px 0;
+      border-radius: 3px;
+    }
+    .status-success {
+      background-color: #d4edda;
+      color: #155724;
+      border-left: 3px solid #28a745;
+    }
+    .status-error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border-left: 3px solid #dc3545;
+    }
+    .status-warning {
+      background-color: #fff3cd;
+      color: #856404;
+      border-left: 3px solid #ffc107;
+    }
+    .status-info {
+      background-color: #d1ecf1;
+      color: #0c5460;
+      border-left: 3px solid #17a2b8;
+    }
+    .validation-result {
+      display: none;
+      padding: 12px;
+      border-radius: 4px;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    .validation-result.valid {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .validation-result.invalid {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .retry-btn {
+      margin-top: 10px;
+      padding: 8px 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .retry-btn:hover {
+      background-color: #0056b3;
+    }
+  </style>
+
+  <script type="module">
+    import {askForSecrets} from "@azure/api-management-custom-widgets-tools"
+    import App from "./index"
+
+    let appInstance = null;
+
+    async function loadSecrets() {
+      const secrets = await askForSecrets("app")
+      appInstance = new App(secrets)
+      
+      // Expose retry function
+      window.retryFindElements = () => {
+        if (appInstance) {
+          appInstance = new App(secrets)
+        }
+      }
+    }
+
+    loadSecrets()
+      .catch(e => {
+        console.error("Failed to retrieve secrets from the Developer Portal.", e)
+        // Still create the app for testing purposes
+        const mockSecrets = {}
+        appInstance = new App(mockSecrets)
+        window.retryFindElements = () => {
+          appInstance = new App(mockSecrets)
+        }
+      })
+      .finally(() => {
+        for (const element of document.getElementsByClassName("loading")) {
+          element.classList.remove("loading")
+        }
+      })
+  </script>
+</head>
+<body class="height-fill loading">
+<div class="widget-container">
+  <div class="widget-header">
+    <h3>🔗 DOM Widget - Parent Element Interceptor</h3>
+    <p>This widget automatically finds the first input and button before the iframe, intercepts button clicks, and validates textbox content.</p>
+  </div>
+
+  <div class="config-section">
+    <h4>📋 Configuration</h4>
+    <div class="config-item">
+      <label>Validation Pattern:</label>
+      <span id="values.validationPattern">-</span>
+    </div>
+    <div class="config-item">
+      <label>Error Message:</label>
+      <span id="values.validationMessage">-</span>
+    </div>
+  </div>
+
+  <div class="config-section">
+    <h4>📊 Status Log</h4>
+    <div id="status">
+      <em>Initializing...</em>
+    </div>
+    <button class="retry-btn" onclick="window.retryFindElements()">🔄 Retry Finding Elements</button>
+  </div>
+
+  <div id="validation-result" class="validation-result"></div>
+</div>
+</body>
+</html>

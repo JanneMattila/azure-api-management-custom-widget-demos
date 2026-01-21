@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>dom-widget – editor</title>
+  <link rel="stylesheet" href="./styles/editor.scss">
+  <script type="module">
+    import initialize, {onChange} from "./editor"
+
+    initialize()
+
+    window.onChange = onChange
+  </script>
+</head>
+<body>
+<fieldset class="form flex flex-item flex-item-grow no-overflow">
+  <div class="form-group">
+    <p style="margin-bottom: 15px; color: #666; font-size: 12px;">
+      This widget automatically finds the first input field and button element 
+      located before the iframe in the parent page's DOM.
+    </p>
+
+    <div class="form-group">
+      <label class="form-label" for="validationPattern">Validation Pattern (Regex)</label>
+      <div class="input-group">
+        <input id="validationPattern" class="form-control" type="text"
+               oninput="onChange({validationPattern: this.value})" />
+      </div>
+      <small class="form-text text-muted">Regular expression pattern to validate the textbox content</small>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="validationMessage">Validation Error Message</label>
+      <div class="input-group">
+        <input id="validationMessage" class="form-control" type="text"
+               oninput="onChange({validationMessage: this.value})" />
+      </div>
+      <small class="form-text text-muted">Message to display when validation fails</small>
+    </div>
+  </div>
+</fieldset>
+</body>
+</html>
