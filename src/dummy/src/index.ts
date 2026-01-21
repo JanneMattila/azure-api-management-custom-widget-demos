@@ -37,24 +37,44 @@ class App {
     document.getElementById("message")?.setAttribute("placeholder", this.values.placeholder)
     document.getElementById("form")?.setAttribute("action", this.values.actionUrl)
 
-    // Fetch user name and update placeholder
-    this.fetchUserName().then((userName) => {
-      if (userName) {
-        document.getElementById("message")?.setAttribute("placeholder", `Hello, ${userName}!`)
-        const messageElement = document.getElementById("message") as HTMLInputElement | HTMLTextAreaElement | null
-        if (messageElement) {
-          messageElement.value = secrets.token || ""
+    // Check if user is logged in to APIM
+    if (!this.secrets.userId || !this.secrets.token) {
+      // User is not logged in - show "not logged in" state
+      console.log("User is not logged in to APIM Developer Portal")
+      this.showNotLoggedIn()
+    } else {
+      // Fetch user name and update placeholder
+      this.fetchUserName().then((userName) => {
+        if (userName) {
+          document.getElementById("message")?.setAttribute("placeholder", `Hello, ${userName}!`)
+          const messageElement = document.getElementById("message") as HTMLInputElement | HTMLTextAreaElement | null
+          if (messageElement) {
+            messageElement.value = secrets.token || ""
+          }
         }
-      }
-    })
+      })
 
-    // Fetch gateway URL from Developer Portal API
-    this.fetchGatewayUrl()
+      // Fetch gateway URL from Developer Portal API
+      this.fetchGatewayUrl()
+    }
 
     // Expose methods to window for button onclick handlers
     ;(window as any).msalLogin = () => this.msalLogin()
     ;(window as any).msalLogout = () => this.msalLogout()
     ;(window as any).testAPI = () => this.testAPI()
+  }
+
+  private showNotLoggedIn(): void {
+    const authStatus = document.getElementById("auth-status")
+    const messageElement = document.getElementById("message") as HTMLTextAreaElement | null
+    
+    if (authStatus) {
+      authStatus.textContent = "Not logged in to Developer Portal"
+      authStatus.style.color = "orange"
+    }
+    if (messageElement) {
+      messageElement.value = "Please log in to the Developer Portal to use this widget."
+    }
   }
 
   private async fetchGatewayUrl(): Promise<void> {
@@ -139,15 +159,20 @@ class App {
       const response = await this.msalInstance.handleRedirectPromise()
       if (response) {
         this.msalAccount = response.account
-        this.updateUI()
+        // Only update UI if user is logged in to APIM
+        if (this.secrets.userId && this.secrets.token) {
+          this.updateUI()
+        }
       } else {
         // Check if there's an account already signed in
         const accounts = this.msalInstance.getAllAccounts()
         if (accounts.length > 0) {
           this.msalAccount = accounts[0]
-          this.updateUI()
-          // Try to acquire token silently on page load
-          await this.acquireTokenSilently()
+          // Only update UI and acquire token if user is logged in to APIM
+          if (this.secrets.userId && this.secrets.token) {
+            this.updateUI()
+            await this.acquireTokenSilently()
+          }
         }
       }
 
